@@ -10,14 +10,15 @@ from unstructured.staging.base import elements_to_json
 # --- Configuration ---
 # !!! IMPORTANT: Change this to your SearXNG instance URL
 SEARXNG_URL = "http://127.0.0.1:8081/search" 
-MAX_RESULTS_TO_PARSE = 3 # How many top results to parse per query
+# How many top results to parse per query
+MAX_RESULTS_TO_PARSE = 3
 
 def add_markdonwn(text: str, element_class: str) -> str:
     """
     Adds markdown formatting based on the element class.
     """
     if element_class == "Title":
-        return f"# {text}"
+        return f"## {text}"
     elif element_class == "Text":
         return f"*{text}*"
     else:
@@ -106,6 +107,7 @@ async def search_and_parse_web(query: str) -> str:
 
     # --- Step 2 & 3: Browse and Parse all pages concurrently ---
     tasks = [get_and_parse_page(url) for url in urls]
+
     parsed_results = await asyncio.gather(*tasks)
 
     # --- Step 4: Format the output for the LLM ---
