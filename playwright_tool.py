@@ -9,6 +9,8 @@ from unstructured.staging.base import elements_to_json
 
 # --- Configuration ---
 # !!! IMPORTANT: Change this to your SearXNG instance URL
+# Constants for testing, the search_and_parse_web function takes these as parameters
+# when calling externally. ONLY USED IF CALLED AS MAIN!
 SEARXNG_URL = "http://127.0.0.1:8081/search" 
 # How many top results to parse per query
 MAX_RESULTS_TO_PARSE = 3
@@ -70,7 +72,7 @@ async def get_and_parse_page(url: str) -> tuple[str, str]:
         print(f"  > Error parsing {url}: {e}", file=sys.stderr)
         return None, url
 
-async def search_and_parse_web(query: str) -> str:
+async def search_and_parse_web(query: str, searxng_url: str, max_results: int) -> str:
     """
     This is the main function that implements the tool.
     It chains SearXNG, Playwright, and Unstructured.
@@ -83,7 +85,7 @@ async def search_and_parse_web(query: str) -> str:
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                SEARXNG_URL,
+                searxng_url,
                 params={"q": query, "format": "json"},
                 headers={"Accept": "application/json"},
                 timeout=10,
@@ -97,8 +99,8 @@ async def search_and_parse_web(query: str) -> str:
                 return "No search results found."
 
             # Limit to top N results
-            urls = urls[:MAX_RESULTS_TO_PARSE]
-                
+            urls = urls[:max_results]
+
             print(f"--- 2. Found {len(urls)} URLs. Starting parser... ---", file=sys.stderr)
 
     except Exception as e:
@@ -135,7 +137,7 @@ if __name__ == "__main__":
     async def test_run():
         # The script will now print the *clean output* to stdout
         # and logs to stderr.
-        output = await search_and_parse_web(query)
+        output = await search_and_parse_web(query, SEARXNG_URL, MAX_RESULTS_TO_PARSE)
         print(output) # This prints the final result to stdout
 
         with open("results.md", "w", encoding="utf-8") as f:
